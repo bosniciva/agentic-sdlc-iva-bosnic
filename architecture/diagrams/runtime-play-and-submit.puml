@@ -1,0 +1,62 @@
+@startuml runtime-play-and-submit
+title PacMan - Runtime: Play a game and submit the score
+
+actor Player as player
+participant "Input Handler" as input
+participant "Game Engine" as engine
+participant "Maze" as maze
+participant "Ghost AI" as ghostai
+participant "Scoring" as scoring
+participant "Renderer" as renderer
+participant "API Client" as apiclient
+participant "Score Endpoint" as scoreendpoint
+participant "Auth Verification" as auth
+participant "Score Validation" as validation
+participant "Repository" as repo
+participant "Game Database" as db
+participant "Identity Provider" as idp
+
+player -> input: Press movement keys (keyboard events)
+input -> engine: Send movement intents
+
+loop Each frame until game over
+    engine -> maze: Read layout and pellet state
+    engine -> ghostai: Update ghost positions
+    engine -> scoring: Report pickups and collisions
+    engine -> renderer: Draw frame (Canvas API)
+end
+
+engine -> engine: Measure play time from game start to game over
+engine -> scoring: Compute final score
+scoring -> apiclient: Hand off final score and play time
+note over apiclient: ID token comes from the login scenario.
+
+apiclient -> scoreendpoint: Submit score with ID token (HTTPS/JSON)
+scoreendpoint -> auth: Verify ID token
+auth -> idp: Check token and identity (OAuth2/OIDC)
+
+alt Token missing or invalid
+    idp --> auth: Token invalid
+    auth --> scoreendpoint: Reject with 401
+    scoreendpoint --> apiclient: 401 Unauthorized (HTTPS/JSON)
+    apiclient --> player: Prompt re-sign-in
+else Token valid
+    idp --> auth: Token valid
+    auth --> scoreendpoint: Player identity confirmed
+
+    scoreendpoint -> validation: Check plausibility of score and play time
+
+    alt Validation fails
+        validation --> scoreendpoint: Implausible score
+        scoreendpoint --> apiclient: Reject submission (HTTPS/JSON)
+        apiclient --> player: Show score rejected
+    else Validation passes
+        validation --> scoreendpoint: Score plausible
+        scoreendpoint -> repo: Store accepted score
+        repo -> db: Insert score (SQL)
+        scoreendpoint --> apiclient: Confirm submission (HTTPS/JSON)
+        apiclient --> player: Show submission confirmed
+    end
+end
+
+@enduml

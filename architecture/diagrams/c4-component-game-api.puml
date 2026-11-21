@@ -1,0 +1,29 @@
+@startuml c4-component-game-api
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title PacMan - Component Diagram for Game API
+
+Person(player, "Player", "Views the leaderboard and submits scores")
+Container(client, "Game Client", "React 18, TypeScript", "Submits scores and reads the leaderboard")
+ContainerDb(db, "Game Database", "SQLite", "Stores submitted scores")
+System_Ext(idp, "Identity Provider", "Authenticates players and manages their accounts")
+
+Container_Boundary(api, "Game API") {
+    Component(scoreendpoint, "Score Endpoint", "FastAPI route", "Receives score submissions")
+    Component(leaderboardendpoint, "Leaderboard Endpoint", "FastAPI route", "Returns ranked scores")
+    Component(auth, "Auth Verification", "Python module", "Verifies OIDC ID tokens")
+    Component(validation, "Score Validation", "Python module", "Applies plausibility checks")
+    Component(repo, "Repository", "Python module", "Reads and writes scores in SQLite")
+}
+
+Rel(player, client, "Uses the game client", "HTTPS")
+Rel(client, scoreendpoint, "Submits score with ID token", "HTTPS/JSON")
+Rel(client, leaderboardendpoint, "Reads leaderboard without login", "HTTPS/JSON")
+Rel(scoreendpoint, auth, "Verifies ID token", "Python calls")
+Rel(auth, idp, "Checks token and identity", "OAuth2/OIDC")
+Rel(scoreendpoint, validation, "Checks score plausibility", "Python calls")
+Rel(scoreendpoint, repo, "Stores accepted score", "Python calls")
+Rel(leaderboardendpoint, repo, "Reads ranked scores", "Python calls")
+Rel(repo, db, "Reads and writes scores", "SQL")
+
+@enduml

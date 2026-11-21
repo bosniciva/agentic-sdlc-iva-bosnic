@@ -1,0 +1,47 @@
+@startuml deployment
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
+
+title PacMan - Deployment Diagram
+
+Person(player, "Player", "Plays PacMan and wants to see how their score ranks")
+
+Deployment_Node(dev, "Developer workstation", "Local machine") {
+    Container(client_dev, "Game Client", "React 18, TypeScript", "Served locally with one command")
+    Container(api_dev, "Game API", "Python 3.12, FastAPI", "Runs locally")
+    ContainerDb(db_dev, "Game Database", "SQLite", "Local database file")
+}
+
+Deployment_Node(ci, "GitHub Actions runner", "GitHub-hosted") {
+    Container(ci_job, "Build and test job", "GitHub Actions", "Builds and tests the Docker image")
+}
+
+Deployment_Node(registry, "GitHub Container Registry", "Container registry") {
+    Container(api_image, "Game API image", "Docker", "Versioned API image")
+}
+
+Deployment_Node(prod, "Production Linux VM", "Single VM with Docker Engine") {
+    Deployment_Node(proxy, "HTTPS reverse proxy", "TLS termination") {
+    }
+    Deployment_Node(host, "Docker Compose host", "Docker Engine") {
+        Container(client_prod, "Game Client", "React 18, TypeScript", "Static files served to the browser")
+        Container(api_prod, "Game API", "Python 3.12, FastAPI", "Runs from the published image")
+        ContainerDb(db_prod, "Game Database", "SQLite", "Database file on a Docker volume")
+    }
+}
+
+System_Ext(idp, "Identity Provider", "Authenticates players and manages their accounts")
+
+Rel(player, client_dev, "Plays and views leaderboard", "HTTP on localhost")
+Rel(client_dev, api_dev, "Submits scores and reads leaderboard", "HTTP/JSON on localhost")
+Rel(api_dev, db_dev, "Reads and writes", "SQL")
+
+Rel(ci_job, api_image, "Builds, tests and publishes", "Docker push")
+Rel(api_prod, api_image, "Pulls and runs", "Docker image")
+
+Rel(player, client_prod, "Plays and views leaderboard", "HTTPS")
+Rel(client_prod, api_prod, "Submits scores and reads leaderboard", "HTTPS/JSON")
+Rel(api_prod, db_prod, "Reads and writes", "SQL")
+Rel(client_prod, idp, "Starts sign-in before submission", "OAuth2/OIDC")
+Rel(api_prod, idp, "Verifies player identity", "OAuth2/OIDC")
+
+@enduml

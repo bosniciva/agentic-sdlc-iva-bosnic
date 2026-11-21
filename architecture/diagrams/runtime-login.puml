@@ -1,0 +1,16 @@
+@startuml runtime-login
+title PacMan - Runtime: Log in with Google Sign-In
+
+actor Player as player
+participant "API Client" as apiclient
+participant "Identity Provider" as idp
+
+player -> apiclient: Request sign-in before submitting a score
+apiclient -> idp: Redirect to Google sign-in (OAuth2/OIDC)
+idp -> player: Ask for credentials and consent
+player -> idp: Authenticate (HTTPS/OIDC)
+idp --> apiclient: Return signed ID token
+apiclient -> apiclient: Keep ID token for score submission
+note over apiclient: The Game API verifies this token in the submit scenario.
+
+@enduml
