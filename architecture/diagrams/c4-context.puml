@@ -1,0 +1,13 @@
+@startuml c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title PacMan - System Context
+
+Person(player, "Player", "Plays PacMan and wants to see how their score ranks")
+System(pacman, "PacMan system", "Lets players play a game, track their scores, and compete on a leaderboard")
+System_Ext(idp, "Identity Provider", "Authenticates players and manages their accounts")
+
+Rel(player, pacman, "Plays the game and views leaderboard", "HTTPS")
+Rel(pacman, idp, "Verifies player identity", "OAuth2/OIDC")
+
+@enduml
