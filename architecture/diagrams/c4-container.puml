@@ -1,0 +1,22 @@
+@startuml c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title PacMan - Container Diagram
+
+Person(player, "Player", "Plays PacMan and wants to see how their score ranks")
+
+System_Boundary(pacman, "PacMan system") {
+    Container(client, "Game Client", "React 18, TypeScript", "Runs the game loop and renders the maze in the browser")
+    Container(api, "Game API", "Python 3.12, FastAPI", "Accepts scores and serves the leaderboard")
+    ContainerDb(db, "Game Database", "SQLite", "Stores submitted scores")
+}
+
+System_Ext(idp, "Identity Provider", "Authenticates players and manages their accounts")
+
+Rel(player, client, "Plays the game and views leaderboard", "HTTPS")
+Rel(client, api, "Submits scores and reads leaderboard", "HTTPS/JSON")
+Rel(api, db, "Reads and writes scores", "SQL")
+Rel(client, idp, "Starts sign-in before score submission", "HTTPS/OIDC")
+Rel(api, idp, "Verifies player identity", "OAuth2/OIDC")
+
+@enduml

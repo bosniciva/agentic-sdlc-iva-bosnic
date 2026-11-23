@@ -1,0 +1,21 @@
+@startuml runtime-view-leaderboard
+title PacMan - Runtime: View the leaderboard without login
+
+actor Player as player
+participant "API Client" as apiclient
+participant "Leaderboard Endpoint" as leaderboardendpoint
+participant "Repository" as repo
+participant "Game Database" as db
+
+player -> apiclient: Open the leaderboard
+apiclient -> leaderboardendpoint: Request ranked scores (HTTPS/JSON)
+note over apiclient, leaderboardendpoint: No ID token is sent or required.
+
+leaderboardendpoint -> repo: Read ranked scores
+repo -> db: Select scores ordered by score (SQL)
+db --> repo: Score rows
+repo --> leaderboardendpoint: Leaderboard entries
+leaderboardendpoint --> apiclient: Return ranked scores (HTTPS/JSON)
+apiclient --> player: Display leaderboard
+
+@enduml

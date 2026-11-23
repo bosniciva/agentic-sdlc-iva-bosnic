@@ -1,0 +1,30 @@
+@startuml c4-component-game-client
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title PacMan - Component Diagram for Game Client
+
+Person(player, "Player", "Plays the game and views the leaderboard")
+Container(api, "Game API", "Python 3.12, FastAPI", "Accepts scores and serves the leaderboard")
+System_Ext(idp, "Identity Provider", "Authenticates players and manages their accounts")
+
+Container_Boundary(client, "Game Client") {
+    Component(engine, "Game Engine", "TypeScript module", "Runs the update loop and owns game state")
+    Component(maze, "Maze", "TypeScript module", "Defines layout, pellets and walkability")
+    Component(ghostai, "Ghost AI", "TypeScript module", "Controls ghost movement and behaviour")
+    Component(scoring, "Scoring", "TypeScript module", "Tracks pickups and computes the final score")
+    Component(renderer, "Renderer", "HTML5 Canvas", "Draws game state to the canvas")
+    Component(input, "Input Handler", "TypeScript module", "Converts keyboard input to game intents")
+    Component(apiclient, "API Client", "TypeScript module", "Submits scores and reads the leaderboard")
+}
+
+Rel(player, input, "Controls PacMan", "Keyboard events")
+Rel(input, engine, "Sends movement intents", "TypeScript calls")
+Rel(engine, maze, "Reads and updates layout", "TypeScript calls")
+Rel(engine, ghostai, "Updates ghost behaviour", "TypeScript calls")
+Rel(engine, scoring, "Reports pickups and collisions", "TypeScript calls")
+Rel(engine, renderer, "Draws each frame", "Canvas API")
+Rel(scoring, apiclient, "Hands off the final score", "TypeScript calls")
+Rel(apiclient, api, "Submits score and reads leaderboard", "HTTPS/JSON")
+Rel(apiclient, idp, "Starts sign-in before submission", "OAuth2/OIDC")
+
+@enduml
